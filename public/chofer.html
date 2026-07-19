@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlántico Remises - Chofer</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #0a192f; color: white; padding: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Atlántico Remises</h1>
+    <h3>Modo Chofer</h3>
+    <p id="status">Esperando conexión GPS...</p>
+
+    <!-- La magia de Socket.io se conecta sola desde el servidor -->
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <script>
+        const socket = io();
+        const statusText = document.getElementById('status');
+
+        // Esta función se ejecuta sola en cuanto se abre la página
+        navigator.geolocation.watchPosition((pos) => {
+            const { latitude, longitude } = pos.coords;
+            
+            // Enviamos la ubicación al servidor
+            socket.emit('update-location', { lat: latitude, lng: longitude });
+            
+            statusText.innerText = "Transmisión activa: " + latitude.toFixed(4) + ", " + longitude.toFixed(4);
+        }, (err) => {
+            statusText.innerText = "Error: Activa el GPS para empezar.";
+        }, {
+            enableHighAccuracy: true
+        });
+    </script>
+</body>
+</html>
