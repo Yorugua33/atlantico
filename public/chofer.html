@@ -1,38 +1,28 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlántico Remises - Chofer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
     <style>
-        body { font-family: sans-serif; text-align: center; background: #0a192f; color: white; padding: 20px; }
+        #mapa { height: 100vh; width: 100%; }
     </style>
 </head>
 <body>
     <h1>Atlántico Remises</h1>
-    <h3>Modo Chofer</h3>
-    <p id="status">Esperando conexión GPS...</p>
+    <div id="mapa"></div>
 
-    <!-- La magia de Socket.io se conecta sola desde el servidor -->
-    <script src="/socket.io/socket.io.js"></script>
-    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const socket = io();
-        const statusText = document.getElementById('status');
+        // Inicializa el mapa centrado en Mar del Plata
+        var map = L.map('mapa').setView([-38.0055, -57.5426], 13);
 
-        // Esta función se ejecuta sola en cuanto se abre la página
-        navigator.geolocation.watchPosition((pos) => {
-            const { latitude, longitude } = pos.coords;
-            
-            // Enviamos la ubicación al servidor
-            socket.emit('update-location', { lat: latitude, lng: longitude });
-            
-            statusText.innerText = "Transmisión activa: " + latitude.toFixed(4) + ", " + longitude.toFixed(4);
-        }, (err) => {
-            statusText.innerText = "Error: Activa el GPS para empezar.";
-        }, {
-            enableHighAccuracy: true
-        });
+        // ESTA ES LA CAPA CLARA
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Aquí iría tu lógica de socket.io...
     </script>
 </body>
 </html>
