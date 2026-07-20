@@ -36,6 +36,11 @@
         const marker = L.marker([lat, lng]).addTo(map);
         document.getElementById('estado').innerText = "Mapa listo en Ostende";
 
+        // Forzar a que el mapa cargue los gráficos visuales correctamente
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
+
         // GPS en segundo plano
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(
