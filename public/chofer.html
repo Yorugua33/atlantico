@@ -4,31 +4,18 @@
     <title>Atlántico Remises - Chofer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-    <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #e0e0e0; }
-        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        .info-gps {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: white;
-            padding: 15px;
-            font-family: Arial, sans-serif;
-            z-index: 99999;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border-radius: 8px;
-        }
-    </style>
 </head>
-<body>
+<body style="margin: 0; padding: 0; background: #e5e3df;">
 
-    <div class="info-gps">
+    <!-- Caja de control flotante -->
+    <div style="position: fixed; top: 15px; left: 15px; background: white; padding: 15px; font-family: Arial, sans-serif; z-index: 99999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-radius: 8px;">
         <h3 style="margin: 0 0 8px 0; font-size: 16px;">Modo Chofer (Ostende)</h3>
-        <p id="estado" style="margin: 0 0 10px 0; font-size: 14px; color: #555;">Cargando calles...</p>
+        <p id="estado" style="margin: 0 0 10px 0; font-size: 14px; color: #28a745; font-weight: bold;">Conectado y listo</p>
         <button onclick="simularMovimiento()" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">Simular Avance</button>
     </div>
     
-    <div id="mapa"></div>
+    <!-- Contenedor del mapa -->
+    <div id="mapa" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -39,26 +26,25 @@
         let lat = -37.1167; 
         let lng = -56.8667;
 
-        // Inicializar mapa
+        // Inicializar mapa limpio
         const map = L.map('mapa', {
             zoomControl: false
         }).setView([lat, lng], 15);
 
-        // Capa de mapas alternativa y más rápida de cargar (CartoDB Positron)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        // Capa base segura de mapas vectoriales directos
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap contributors, © CARTO'
+            subdomains: ['a', 'b', 'c']
         }).addTo(map);
 
         const marker = L.marker([lat, lng]).addTo(map);
-        document.getElementById('estado').innerText = "Mapa listo en Ostende";
 
-        // Forzar renderizado inmediato
+        // Forzar redibujado instantáneo de Leaflet
         setTimeout(() => {
             map.invalidateSize();
-        }, 200);
+        }, 100);
 
-        // GPS en segundo plano
+        // GPS en segundo plano (si el celu lo otorga)
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(
                 (position) => {
@@ -66,23 +52,24 @@
                     lng = position.coords.longitude;
                     marker.setLatLng([lat, lng]);
                     map.setView([lat, lng]);
-                    document.getElementById('estado').innerText = "GPS Real Activo";
+                    document.getElementById('estado').innerText = "GPS Activo en Ostende";
                     socket.emit('update-location', { lat, lng });
                 },
                 (error) => {
-                    console.log("GPS no disponible");
+                    console.log("Usando modo manual");
                 },
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         }
 
-        // Botón de simulación
+        // Botón de simulación manual
         function simularMovimiento() {
             lat += 0.001;
+            lng += 0.001;
             marker.setLatLng([lat, lng]);
             map.setView([lat, lng]);
             socket.emit('update-location', { lat, lng });
-            document.getElementById('estado').innerText = "Avanzando...";
+            document.getElementById('estado').innerText = "Avanzando en ruta...";
         }
     </script>
 </body>
