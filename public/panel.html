@@ -1,108 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Atlántico Remises - Chofer con Mapa</title>
+    <title>Atlántico Remises - Panel de Control</title>
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            font-family: Arial, sans-serif;
-            background: #1a1a1a;
-            color: white;
-        }
-        #mapa-chofer {
-            width: 100%;
-            height: 75vh;
-        }
-        .panel-control {
-            height: 25vh;
-            background: #2c2c2c;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
-        }
-        .btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 90%;
-            max-width: 350px;
-        }
-        #estado {
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: #ddd;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        h2 { color: #333; }
+        #status-conexion { font-weight: bold; color: #007bff; }
+        #mapa-panel { width: 100%; height: 550px; border: 2px solid #ccc; border-radius: 8px; }
     </style>
 </head>
 <body>
-
-    <!-- Mapa visible en la pantalla del celular -->
-    <div id="mapa-chofer"></div>
-
-    <div class="panel-control">
-        <p id="estado">Obteniendo GPS...</p>
-        <button class="btn" onclick="actualizarYTransmitir()">Actualizar Mi Posición</button>
-    </div>
+    <h2>Panel Central - Atlántico Remises</h2>
+    <p>Estado: <span id="status-conexion">Buscando al chofer...</span></p>
+    <div id="mapa-panel"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Inicializar el mapa en el celular
-        const map = L.map('mapa-chofer').setView([-37.1290, -56.9052], 16);
+        // Inicializar mapa de inmediato
+        const map = L.map('mapa-panel').setView([-37.1290, -56.9052], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        let marker = null;
+        let markerChofer = null;
 
-        function actualizarYTransmitir() {
-            if ("geolocation" in navigator) {
-                document.getElementById('estado').innerText = "Buscando ubicación exacta...";
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
+        // Consultar la posición guardada cada 2 segundos
+        setInterval(() => {
+            const lat = localStorage.getItem('chofer_lat');
+            const lng = localStorage.getItem('chofer_lng');
 
-                        // Guardar en localStorage para que la PC lo lea
-                        localStorage.setItem('chofer_lat', lat);
-                        localStorage.setItem('chofer_lng', lng);
-                        localStorage.setItem('chofer_tiempo', Date.now());
+            if (lat && lng) {
+                const parsedLat = parseFloat(lat);
+                const parsedLng = parseFloat(lng);
 
-                        // Mostrar en el mapa del celular
-                        if (!marker) {
-                            marker = L.marker([lat, lng]).addTo(map).bindPopup("Estás aquí").openPopup();
-                        } else {
-                            marker.setLatLng([lat, lng]);
-                        }
-                        map.setView([lat, lng], 17);
+                document.getElementById('status-conexion').innerHTML = `Chofer activo -> Lat: ${parsedLat.toFixed(4)}, Lng: ${parsedLng.toFixed(4)}`;
 
-                        document.getElementById('estado').innerText = `¡Transmitido! Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-                    },
-                    (error) => {
-                        document.getElementById('estado').innerText = "Error: Activa el GPS en el celu.";
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            } else {
-                document.getElementById('estado').innerText = "Tu navegador no soporta GPS.";
+                if (!markerChofer) {
+                    markerChofer = L.marker([parsedLat, parsedLng]).addTo(map).bindPopup("Chofer en vivo").openPopup();
+                } else {
+                    markerChofer.setLatLng([parsedLat, parsedLng]);
+                }
+                map.setView([parsedLat, parsedLng], 16);
             }
-        }
-
-        // Ejecutar al abrir la página
-        setTimeout(actualizarYTransmitir, 1000);
+        }, 2000);
     </script>
 </body>
 </html>
