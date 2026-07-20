@@ -331,8 +331,9 @@
         let choferes = JSON.parse(localStorage.getItem('atlantico_choferes')) || [];
         let choferEditandoId = null;
         let cronometrosIntervalos = {};
+        let markersMap = {};
 
-        // Crear ícono personalizado de automóvil 3D con alta visibilidad
+        // Crear ícono personalizado de automóvil 3D con alta visibilidad y anclaje central
         const iconoAuto3D = L.divIcon({
             className: 'custom-car-icon',
             html: '<div class="car-3d-marker"><i class="fa-solid fa-car-side"></i></div>',
@@ -426,6 +427,10 @@
             if (confirm('¿Seguro desea eliminar este chofer de la base?')) {
                 clearInterval(cronometrosIntervalos[id]);
                 delete cronometrosIntervalos[id];
+                if (markersMap[id]) {
+                    map.removeLayer(markersMap[id]);
+                    delete markersMap[id];
+                }
                 choferes = choferes.filter(c => c.id !== id);
                 guardarStorage();
             }
@@ -455,23 +460,35 @@
             cerrarModal();
         }
 
-        let markersMap = {};
         function renderizarFIFO() {
             const contenedor = document.getElementById('lista-choferes');
             contenedor.innerHTML = '';
 
-            // Limpiar marcadores anteriores del mapa de forma segura
-            Object.values(markersMap).forEach(m => map.removeLayer(m));
-            markersMap = {};
+            // Sincronizar marcadores del mapa sin destruir los existentes innecesariamente
+            const idsActuales = choferes.map(c => c.id);
+            
+            // Eliminar marcadores que ya no están
+            Object.keys(markersMap).forEach(idStr => {
+                const id = Number(idStr);
+                if (!idsActuales.includes(id)) {
+                    map.removeLayer(markersMap[id]);
+                    delete markersMap[id];
+                }
+            });
 
             choferes.forEach((chofer, index) => {
                 const esPrimeroFIFO = (index === 0);
                 if (!cronometrosIntervalos[chofer.id]) iniciarCronometro(chofer.id);
 
-                // Agregar el marcador del auto 3D al mapa garantizando su renderizado con Leaflet
-                const marker = L.marker([chofer.lat, chofer.lng], { icon: iconoAuto3D }).addTo(map)
-                    .bindPopup(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
-                markersMap[chofer.id] = marker;
+                // Actualizar o crear marcador en el mapa manteniendo la posición enviada
+                if (markersMap[chofer.id]) {
+                    markersMap[chofer.id].setLatLng([chofer.lat, chofer.lng]);
+                    markersMap[chofer.id].setPopupContent(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
+                } else {
+                    const marker = L.marker([chofer.lat, chofer.lng], { icon: iconoAuto3D }).addTo(map)
+                        .bindPopup(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
+                    markersMap[chofer.id] = marker;
+                }
 
                 const card = document.createElement('div');
                 card.className = `chofer-card ${esPrimeroFIFO ? 'active-turn' : ''}`;
