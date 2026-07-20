@@ -4,18 +4,31 @@
     <title>Atlántico Remises - Chofer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #e0e0e0; }
+        #mapa { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        .info-gps {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            z-index: 99999;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background: #e0e0e0;">
+<body>
 
-    <!-- Caja de control flotante -->
-    <div style="position: fixed; top: 15px; left: 15px; background: white; padding: 15px; font-family: Arial, sans-serif; z-index: 99999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-radius: 8px;">
+    <div class="info-gps">
         <h3 style="margin: 0 0 8px 0; font-size: 16px;">Modo Chofer (Ostende)</h3>
-        <p id="estado" style="margin: 0 0 10px 0; font-size: 14px; color: #555;">Iniciando mapa...</p>
+        <p id="estado" style="margin: 0 0 10px 0; font-size: 14px; color: #555;">Cargando calles...</p>
         <button onclick="simularMovimiento()" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">Simular Avance</button>
     </div>
     
-    <!-- Mapa ocupando obligatoriamente toda la pantalla -->
-    <div id="mapa" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;"></div>
+    <div id="mapa"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -27,19 +40,23 @@
         let lng = -56.8667;
 
         // Inicializar mapa
-        const map = L.map('mapa').setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const map = L.map('mapa', {
+            zoomControl: false
+        }).setView([lat, lng], 15);
+
+        // Capa de mapas alternativa y más rápida de cargar (CartoDB Positron)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors, © CARTO'
         }).addTo(map);
 
         const marker = L.marker([lat, lng]).addTo(map);
         document.getElementById('estado').innerText = "Mapa listo en Ostende";
 
-        // Forzar a que el mapa cargue los gráficos visuales correctamente
+        // Forzar renderizado inmediato
         setTimeout(() => {
             map.invalidateSize();
-        }, 300);
+        }, 200);
 
         // GPS en segundo plano
         if ("geolocation" in navigator) {
