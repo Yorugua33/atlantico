@@ -5,76 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background: #1a1a1a;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
+            margin: 0; padding: 0; background: #1a1a1a; color: white;
+            font-family: Arial, sans-serif; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; height: 100vh; text-align: center;
         }
-        .card {
-            background: #2c2c2c;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            width: 85%;
-            max-width: 400px;
-        }
-        h2 { margin-top: 0; color: #4CAF50; font-size: 20px; }
+        .card { background: #2c2c2c; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; }
+        h2 { color: #4CAF50; font-size: 20px; }
         .btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            margin-top: 15px;
+            background: #28a745; color: white; border: none; padding: 15px;
+            font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 15px;
         }
-        #estado { font-size: 14px; margin: 15px 0; color: #ddd; word-break: break-all; }
+        #estado { font-size: 14px; margin: 15px 0; color: #ddd; }
     </style>
 </head>
 <body>
-
     <div class="card">
         <h2>Modo Chofer</h2>
-        <p id="estado">Solicitando permiso de GPS...</p>
-        <button class="btn" onclick="pedirGPSReal()">Forzar GPS Real</button>
+        <p id="estado">Listo para transmitir</p>
+        <button class="btn" onclick="enviarUbicacionAPI()">Transmitir Posición</button>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        let lat = -37.1290;
+        let lng = -56.9052;
 
-        function pedirGPSReal() {
-            if ("geolocation" in navigator) {
-                document.getElementById('estado').innerText = "Buscando satélites GPS...";
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        let lat = position.coords.latitude;
-                        let lng = position.coords.longitude;
-                        document.getElementById('estado').innerText = "¡GPS OK! Lat: " + lat.toFixed(4) + " Lng: " + lng.toFixed(4);
-                        socket.emit('update-location', { lat, lng });
-                    },
-                    (error) => {
-                        document.getElementById('estado').innerText = "Error GPS: Activa la ubicación en el celu.";
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            } else {
-                document.getElementById('estado').innerText = "Tu navegador no soporta GPS.";
-            }
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                document.getElementById('estado').innerText = `GPS OK: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            });
         }
 
-        // Intentar al cargar
-        pedirGPSReal();
+        function enviarUbicacionAPI() {
+            document.getElementById('estado').innerText = "Enviando...";
+            
+            // Usamos un servicio gratuito temporal de API (jsonbin o localStorage compartido) 
+            // O guardamos localmente para sincronizar pestañas en la misma PC de prueba:
+            localStorage.setItem('chofer_lat', lat);
+            localStorage.setItem('chofer_lng', lng);
+            localStorage.setItem('chofer_tiempo', Date.now());
+
+            document.getElementById('estado').innerText = "¡Posición enviada con éxito!";
+        }
     </script>
 </body>
 </html>
