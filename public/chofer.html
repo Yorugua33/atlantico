@@ -3,73 +3,86 @@
 <head>
     <title>Atlántico Remises - Chofer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+        .card {
+            background: #2c2c2c;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            width: 85%;
+            max-width: 400px;
+        }
+        h2 { margin-top: 0; color: #4CAF50; }
+        .btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .btn:active { background: #218838; }
+        #estado { font-size: 16px; margin: 15px 0; color: #ddd; }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background: #e5e3df;">
+<body>
 
-    <!-- Caja de control flotante -->
-    <div style="position: fixed; top: 15px; left: 15px; background: white; padding: 15px; font-family: Arial, sans-serif; z-index: 99999; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-radius: 8px;">
-        <h3 style="margin: 0 0 8px 0; font-size: 16px;">Modo Chofer (Ostende)</h3>
-        <p id="estado" style="margin: 0 0 10px 0; font-size: 14px; color: #28a745; font-weight: bold;">Conectado y listo</p>
-        <button onclick="simularMovimiento()" style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">Simular Avance</button>
+    <div class="card">
+        <h2>Modo Chofer (Ostende)</h2>
+        <p id="estado">Sistema en línea</p>
+        <button class="btn" onclick="enviarUbicacion()">Avanzar / Enviar Posición</button>
     </div>
-    
-    <!-- Contenedor del mapa -->
-    <div id="mapa" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
 
-        // Coordenadas fijas de Ostende
+        // Coordenadas iniciales de Ostende
         let lat = -37.1167; 
         let lng = -56.8667;
 
-        // Inicializar mapa limpio
-        const map = L.map('mapa', {
-            zoomControl: false
-        }).setView([lat, lng], 15);
-
-        // Capa base segura de mapas vectoriales directos
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            subdomains: ['a', 'b', 'c']
-        }).addTo(map);
-
-        const marker = L.marker([lat, lng]).addTo(map);
-
-        // Forzar redibujado instantáneo de Leaflet
-        setTimeout(() => {
-            map.invalidateSize();
-        }, 100);
-
-        // GPS en segundo plano (si el celu lo otorga)
+        // Intentar GPS automático de fondo
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(
                 (position) => {
                     lat = position.coords.latitude;
                     lng = position.coords.longitude;
-                    marker.setLatLng([lat, lng]);
-                    map.setView([lat, lng]);
-                    document.getElementById('estado').innerText = "GPS Activo en Ostende";
+                    document.getElementById('estado').innerText = "GPS Activo: " + lat.toFixed(4) + ", " + lng.toFixed(4);
                     socket.emit('update-location', { lat, lng });
                 },
                 (error) => {
-                    console.log("Usando modo manual");
+                    console.log("GPS no disponible, usando modo manual");
                 },
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         }
 
-        // Botón de simulación manual
-        function simularMovimiento() {
-            lat += 0.001;
+        // Botón manual infalible para simular movimiento y reportar al panel
+        function enviarUbicacion() {
+            lat += 0.001; 
             lng += 0.001;
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng]);
+            document.getElementById('estado').innerText = "Enviando avance...";
             socket.emit('update-location', { lat, lng });
-            document.getElementById('estado').innerText = "Avanzando en ruta...";
+            setTimeout(() => {
+                document.getElementById('estado').innerText = "¡Posición enviada al panel!";
+            }, 300);
         }
     </script>
 </body>
