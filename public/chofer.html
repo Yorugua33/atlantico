@@ -6,73 +6,85 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
-        #mapa { height: 100vh; width: 100vw; }
+        #mapa { height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 1; }
         .info-gps {
             position: absolute;
             top: 15px;
             left: 15px;
             background: white;
-            padding: 10px 15px;
+            padding: 15px;
             font-family: Arial, sans-serif;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        .btn-mover {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
             border-radius: 5px;
+            margin-top: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: block;
+            width: 100%;
         }
     </style>
 </head>
 <body>
     <div class="info-gps">
-        <h3>Modo Chofer</h3>
-        <p id="estado">Obteniendo ubicación GPS...</p>
+        <h3>Modo Chofer (Ostende)</h3>
+        <p id="estado">Iniciando mapa...</p>
+        <button class="btn-mover" onclick="simularMovimiento()">Simular Avance</button>
     </div>
+    
     <div id="mapa"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let map = null;
-        let marker = null;
 
-        // Verificar si el navegador soporta GPS
+        // Coordenadas aproximadas de Ostende, Buenos Aires (Punto de partida seguro)
+        let lat = -37.1167; 
+        let lng = -56.8667;
+
+        // Inicializar el mapa inmediatamente para que NUNCA quede la pantalla blanca
+        const map = L.map('mapa').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const marker = L.marker([lat, lng]).addTo(map);
+        document.getElementById('estado').innerText = "Mapa listo en Ostende";
+
+        // Intentar usar el GPS real en segundo plano sin bloquear la pantalla
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-
-                    document.getElementById('estado').innerText = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-
-                    if (!map) {
-                        // Inicializa el mapa la primera vez con la posición real de Ostende
-                        map = L.map('mapa').setView([lat, lng], 16);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            maxZoom: 19,
-                            attribution: '© OpenStreetMap contributors'
-                        }).addTo(map);
-
-                        marker = L.marker([lat, lng]).addTo(map);
-                    } else {
-                        // Actualiza el marcador conforme te mueves
-                        marker.setLatLng([lat, lng]);
-                        map.setView([lat, lng]);
-                    }
-
-                    // Enviar la ubicación real al servidor por Socket.io
+                    lat = position.coords.latitude;
+                    lng = position.coords.longitude;
+                    marker.setLatLng([lat, lng]);
+                    map.setView([lat, lng]);
+                    document.getElementById('estado').innerText = "GPS Real Activo";
                     socket.emit('update-location', { lat, lng });
                 },
                 (error) => {
-                    console.error("Error de GPS: ", error);
-                    document.getElementById('estado').innerText = "Error al obtener GPS. Activa la ubicación.";
+                    console.log("GPS no disponible, usando modo manual/predeterminado");
                 },
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 10000
-                }
+                { enableHighAccuracy: true, timeout: 5000 }
             );
-        } else {
-            alert("Tu navegador no soporta geolocalización.");
+        }
+
+        // Botón extra por si quieres simular que el auto avanza por las calles de Ostende con un toque
+        function simularMovimiento() {
+            lat += 0.001; // Mueve un poquito la latitud hacia el norte
+            marker.setLatLng([lat, lng]);
+            map.setView([lat, lng]);
+            socket.emit('update-location', { lat, lng });
+            document.getElementById('estado').innerText = "Avanzando...";
         }
     </script>
 </body>
