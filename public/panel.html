@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Atlántico Remises - Panel de Control</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #mapa { height: 100vh; width: 100%; }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px 15px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-panel">
+        <h3>Panel de Control</h3>
+        <p>Monitoreando choferes en vivo</p>
+    </div>
+    <div id="mapa"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const map = L.map('mapa').setView([-38.0055, -57.5426], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const marker = L.marker([-38.0055, -57.5426]).addTo(map);
+
+        // Recibe la ubicación y actualiza el mapa en tiempo real
+        socket.on('move-car', (data) => {
+            marker.setLatLng([data.lat, data.lng]);
+            map.setView([data.lat, data.lng]);
+        });
+    </script>
+</body>
+</html>
