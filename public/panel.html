@@ -2,64 +2,57 @@
 <html>
 <head>
     <title>Atlántico Remises - Panel de Control</title>
-    <!-- CSS de Leaflet -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <style>
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
-            width: 100%; 
-            overflow: hidden;
-        }
-        #mapa { 
-            height: 100vh; 
-            width: 100vw; 
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        .info-panel {
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #mapa-panel { height: 100vh; width: 100vw; }
+        .panel-info {
             position: absolute;
             top: 15px;
             right: 15px;
             background: white;
-            padding: 15px 20px;
+            padding: 15px;
             font-family: Arial, sans-serif;
             z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             border-radius: 8px;
         }
     </style>
 </head>
 <body>
-
-    <div class="info-panel">
-        <h3>Panel de Control</h3>
-        <p>Monitoreando choferes en vivo</p>
+    <div class="panel-info">
+        <h3>Panel Central</h3>
+        <p id="status-conexion">Esperando señal del chofer...</p>
     </div>
-    
-    <div id="mapa"></div>
 
-    <!-- JS de Leaflet -->
+    <div id="mapa-panel"></div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Inicializar el mapa asegurando la carga visual
-        var map = L.map('mapa').setView([-38.0055, -57.5426], 14);
+        const socket = io();
 
+        // Inicializar el mapa centrado inicialmente en la ubicación real que mandó el celu
+        const map = L.map('mapa-panel').setView([-37.1290, -56.9052], 16);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        var marker = L.marker([-38.0055, -57.5426]).addTo(map);
+        let markerChofer = null;
 
-        const socket = io();
-        socket.on('move-car', (data) => {
-            marker.setLatLng([data.lat, data.lng]);
-            map.setView([data.lat, data.lng]);
+        // Escuchar en tiempo real las coordenadas que envía el celular
+        socket.on('update-location', (data) => {
+            const { lat, lng } = data;
+            document.getElementById('status-conexion').innerText = `Chofer en: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+            if (!markerChofer) {
+                markerChofer = L.marker([lat, lng]).addTo(map).bindPopup("Chofer en vivo").openPopup();
+            } else {
+                markerChofer.setLatLng([lat, lng]);
+            }
+            map.setView([lat, lng], 16);
         });
     </script>
 </body>
