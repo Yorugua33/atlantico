@@ -144,9 +144,24 @@
         .btn-action.danger { color: var(--danger); }
         .btn-action:hover { opacity: 0.85; }
 
+        /* Panel de Recepción de Coordenadas de Móviles */
+        .gps-receiver-box {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px dashed var(--accent);
+            padding: 12px 15px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+        }
+        .gps-receiver-box h4 { color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+        .gps-input-group { display: flex; gap: 6px; margin-top: 6px; }
+        .gps-input-group select, .gps-input-group input {
+            background: var(--bg-dark); border: 1px solid var(--border); color: white; padding: 6px; border-radius: 4px; font-size: 11px;
+        }
+        .gps-input-group input { flex: 1; }
+
         /* Crédito de Diseño Footer Sidebar */
         .sidebar-footer-credit {
-            padding: 12px 20px;
+            padding: 10px 20px;
             background: rgba(0,0,0,0.2);
             border-top: 1px solid var(--border);
             text-align: center;
@@ -263,6 +278,19 @@
                     <!-- Se inyectan dinámicamente -->
                 </div>
             </div>
+
+            <!-- Panel para actualizar ubicación manual enviada por el chofer -->
+            <div class="gps-receiver-box">
+                <h4><i class="fa-solid fa-location-arrow"></i> Actualizar Ubicación de Móvil</h4>
+                <div class="gps-input-group">
+                    <select id="gps-select-chofer">
+                        <option value="">Seleccione chofer...</option>
+                    </select>
+                    <input type="text" id="gps-input-coords" placeholder="Lat, Lng (ej: -37.12,-56.89)">
+                    <button class="btn-primary" style="grid-column: auto; padding: 6px 10px; font-size: 11px;" onclick="actualizarUbicacionGPS()"><i class="fa-solid fa-check"></i></button>
+                </div>
+            </div>
+
             <!-- Crédito de Diseño -->
             <div class="sidebar-footer-credit">
                 Diseño: <span>Marcelo Muraña</span>
@@ -346,6 +374,7 @@
             localStorage.setItem('atlantico_choferes', JSON.stringify(choferes));
             renderizarFIFO();
             actualizarEstadisticasGlobales();
+            actualizarSelectGPS();
         }
 
         function agregarChofer() {
@@ -369,6 +398,45 @@
             document.getElementById('input-nombre').value = '';
             guardarStorage();
             iniciarCronometro(nuevoChofer.id);
+        }
+
+        function actualizarUbicacionGPS() {
+            const selectId = document.getElementById('gps-select-chofer').value;
+            const coordsStr = document.getElementById('gps-input-coords').value.trim();
+            if (!selectId) return alert('Seleccione un chofer.');
+            if (!coordsStr) return alert('Ingrese las coordenadas Lat, Lng.');
+
+            const partes = coordsStr.split(',');
+            if (partes.length !== 2) return alert('Formato incorrecto. Use: Lat, Lng');
+
+            const lat = parseFloat(partes[0].trim());
+            const lng = parseFloat(partes[1].trim());
+
+            if (isNaN(lat) || isNaN(lng)) return alert('Coordenadas inválidas.');
+
+            const chofer = choferes.find(c => c.id == selectId);
+            if (chofer) {
+                chofer.lat = lat;
+                chofer.lng = lng;
+                guardarStorage();
+                map.setView([lat, lng], 15);
+                document.getElementById('gps-input-coords').value = '';
+                alert(`Ubicación actualizada correctamente para ${chofer.nombre}`);
+            }
+        }
+
+        function actualizarSelectGPS() {
+            const select = document.getElementById('gps-select-chofer');
+            if (!select) return;
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">Seleccione chofer...</option>';
+            choferes.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.nombre;
+                select.appendChild(opt);
+            });
+            select.value = valorActual;
         }
 
         function iniciarCronometro(id) {
@@ -531,17 +599,8 @@
             downloadAnchor.remove();
         }
 
-        // Simulación de recepción automática de coordenadas por GPS del móvil (ej: Broadcast / API Receiver)
-        function actualizarUbicacionMovil(nombreChofer, nuevaLat, nuevaLng) {
-            const chofer = choferes.find(c => c.nombre.toLowerCase() === nombreChofer.toLowerCase());
-            if (chofer) {
-                chofer.lat = nuevaLat;
-                chofer.lng = nuevaLng;
-                guardarStorage();
-            }
-        }
-
         renderizarFIFO();
+        actualizarSelectGPS();
     </script>
 </body>
 </html>
