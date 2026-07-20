@@ -176,35 +176,54 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.4);
         }
 
-        /* 🚗 Autito Rojo Plano, Compacto y con el Nombre del Chofer (Celular) */
-        .car-red-flat-container {
-            display: flex;
-            align-items: center;
-            background: #ffffff;
-            border: 2px solid #ef4444;
-            padding: 3px 8px 3px 4px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            white-space: nowrap;
-            transform: translate(-10%, -50%);
-        }
-        .car-red-icon-wrapper {
-            background: #ef4444;
-            color: #ffffff;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+        /* 🚗 Círculo Rojo Plano con Autito y Letrero Oculto (Aparece al pasar el cursor) */
+        .car-red-circle-wrapper {
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            margin-right: 6px;
+            width: 34px;
+            height: 34px;
         }
-        .car-red-text {
-            color: #0f172a;
+        .car-red-circle-node {
+            background: #ef4444;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+            cursor: pointer;
+        }
+        .car-red-hover-label {
+            position: absolute;
+            bottom: 42px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #f8fafc;
+            border: 2px solid #ef4444;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.2px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease-in-out;
+            z-index: 1000;
+        }
+        /* Al pasar el cursor por el círculo rojo, se muestra el letrero */
+        .car-red-circle-wrapper:hover .car-red-hover-label {
+            opacity: 1;
+            visibility: visible;
+            bottom: 46px;
         }
 
         /* Panel Derecho: Mapa y Controles Generales */
@@ -597,7 +616,7 @@
             downloadAnchor.remove();
         }
 
-        // Consultar posición en vivo por localStorage y renderizar el autito rojo plano, compacto y con el nombre exacto del celular
+        // Consultar posición en vivo por localStorage y renderizar el círculo rojo con autito y letrero flotante solo al pasar el cursor
         setInterval(() => {
             const lat = localStorage.getItem('chofer_lat');
             const lng = localStorage.getItem('chofer_lng');
@@ -612,24 +631,24 @@
                 document.getElementById('status-conexion').style.background = 'rgba(16, 185, 129, 0.1)';
                 document.getElementById('status-conexion').style.borderColor = 'rgba(16, 185, 129, 0.3)';
 
-                // Autito rojo plano, compacto, con ícono y nombre del chofer sincronizado del celular
-                const iconoAutoRojoPlanoConNombre = L.divIcon({
-                    className: 'custom-red-car-flat',
+                // Círculo rojo plano con autito y letrero que aparece únicamente al pasar el cursor (hover)
+                const iconoCirculoRojoHover = L.divIcon({
+                    className: 'custom-red-circle-icon',
                     html: `
-                        <div class="car-red-flat-container">
-                            <div class="car-red-icon-wrapper"><i class="fa-solid fa-car-side"></i></div>
-                            <span class="car-red-text">${nombreChoferGPS}</span>
+                        <div class="car-red-circle-wrapper">
+                            <div class="car-red-hover-label">${nombreChoferGPS}</div>
+                            <div class="car-red-circle-node"><i class="fa-solid fa-car-side"></i></div>
                         </div>
                     `,
-                    iconSize: [120, 36],
-                    iconAnchor: [15, 18],
-                    popupAnchor: [0, -18]
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17],
+                    popupAnchor: [0, -17]
                 });
 
                 if (!markerChoferVivo) {
-                    markerChoferVivo = L.marker([parsedLat, parsedLng], { icon: iconoAutoRojoPlanoConNombre }).addTo(map).bindPopup(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`).openPopup();
+                    markerChoferVivo = L.marker([parsedLat, parsedLng], { icon: iconoCirculoRojoHover }).addTo(map).bindPopup(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`);
                 } else {
-                    markerChoferVivo.setIcon(iconoAutoRojoPlanoConNombre);
+                    markerChoferVivo.setIcon(iconoCirculoRojoHover);
                     markerChoferVivo.setLatLng([parsedLat, parsedLng]);
                     markerChoferVivo.setPopupContent(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`);
                 }
