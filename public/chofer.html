@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Atlántico Remises - Chofer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #mapa { height: 100vh; width: 100vw; }
+        .info-gps {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            padding: 10px 15px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-gps">
+        <h3>Modo Chofer</h3>
+        <p id="estado">Obteniendo ubicación GPS...</p>
+    </div>
+    <div id="mapa"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let map = null;
+        let marker = null;
+
+        // Verificar si el navegador soporta GPS
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    document.getElementById('estado').innerText = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+
+                    if (!map) {
+                        // Inicializa el mapa la primera vez con la posición real de Ostende
+                        map = L.map('mapa').setView([lat, lng], 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        marker = L.marker([lat, lng]).addTo(map);
+                    } else {
+                        // Actualiza el marcador conforme te mueves
+                        marker.setLatLng([lat, lng]);
+                        map.setView([lat, lng]);
+                    }
+
+                    // Enviar la ubicación real al servidor por Socket.io
+                    socket.emit('update-location', { lat, lng });
+                },
+                (error) => {
+                    console.error("Error de GPS: ", error);
+                    document.getElementById('estado').innerText = "Error al obtener GPS. Activa la ubicación.";
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000
+                }
+            );
+        } else {
+            alert("Tu navegador no soporta geolocalización.");
+        }
+    </script>
+</body>
+</html>
