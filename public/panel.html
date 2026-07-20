@@ -6,59 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
         h2 { color: #333; }
         #status-conexion { font-weight: bold; color: #007bff; }
-        #mapa-panel {
-            width: 100%;
-            height: 550px;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
+        #mapa-panel { width: 100%; height: 550px; border: 2px solid #ccc; border-radius: 8px; }
     </style>
 </head>
 <body>
-
     <h2>Panel Central - Atlántico Remises</h2>
-    <p>Estado: <span id="status-conexion">Esperando señal del chofer...</span></p>
-
+    <p>Estado: <span id="status-conexion">Buscando al chofer...</span></p>
     <div id="mapa-panel"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    
     <script>
-        const socket = io();
-
-        // Inicializar el mapa
+        // Inicializar mapa de inmediato
         const map = L.map('mapa-panel').setView([-37.1290, -56.9052], 15);
-
-        // Usar CartoDB Positron (mapa ultraliviano y sin bloqueos de red)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors & CARTO'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         let markerChofer = null;
 
-        // Escuchar la ubicación en vivo
-        socket.on('update-location', (data) => {
-            const { lat, lng } = data;
-            document.getElementById('status-conexion').innerHTML = `Chofer en vivo -> Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+        // Consultar la posición guardada cada 2 segundos
+        setInterval(() => {
+            const lat = localStorage.getItem('chofer_lat');
+            const lng = localStorage.getItem('chofer_lng');
 
-            if (!markerChofer) {
-                markerChofer = L.marker([lat, lng]).addTo(map).bindPopup("¡Aquí está el chofer!").openPopup();
-            } else {
-                markerChofer.setLatLng([lat, lng]);
+            if (lat && lng) {
+                const parsedLat = parseFloat(lat);
+                const parsedLng = parseFloat(lng);
+
+                document.getElementById('status-conexion').innerHTML = `Chofer activo -> Lat: ${parsedLat.toFixed(4)}, Lng: ${parsedLng.toFixed(4)}`;
+
+                if (!markerChofer) {
+                    markerChofer = L.marker([parsedLat, parsedLng]).addTo(map).bindPopup("Chofer en vivo").openPopup();
+                } else {
+                    markerChofer.setLatLng([parsedLat, parsedLng]);
+                }
+                map.setView([parsedLat, parsedLng], 16);
             }
-            map.setView([lat, lng], 16);
-        });
+        }, 2000);
     </script>
 </body>
 </html>
