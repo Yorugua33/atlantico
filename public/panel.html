@@ -464,10 +464,8 @@
             const contenedor = document.getElementById('lista-choferes');
             contenedor.innerHTML = '';
 
-            // Sincronizar marcadores del mapa sin destruir los existentes innecesariamente
             const idsActuales = choferes.map(c => c.id);
             
-            // Eliminar marcadores que ya no están
             Object.keys(markersMap).forEach(idStr => {
                 const id = Number(idStr);
                 if (!idsActuales.includes(id)) {
@@ -480,7 +478,6 @@
                 const esPrimeroFIFO = (index === 0);
                 if (!cronometrosIntervalos[chofer.id]) iniciarCronometro(chofer.id);
 
-                // Actualizar o crear marcador en el mapa manteniendo la posición enviada
                 if (markersMap[chofer.id]) {
                     markersMap[chofer.id].setLatLng([chofer.lat, chofer.lng]);
                     markersMap[chofer.id].setPopupContent(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
@@ -514,7 +511,6 @@
                 contenedor.appendChild(card);
             });
 
-            // Forzar actualización visual del mapa para asegurar que los íconos aparezcan correctamente
             setTimeout(() => { map.invalidateSize(); }, 100);
         }
 
@@ -533,6 +529,16 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
+        }
+
+        // Simulación de recepción automática de coordenadas por GPS del móvil (ej: Broadcast / API Receiver)
+        function actualizarUbicacionMovil(nombreChofer, nuevaLat, nuevaLng) {
+            const chofer = choferes.find(c => c.nombre.toLowerCase() === nombreChofer.toLowerCase());
+            if (chofer) {
+                chofer.lat = nuevaLat;
+                chofer.lng = nuevaLng;
+                guardarStorage();
+            }
         }
 
         renderizarFIFO();
