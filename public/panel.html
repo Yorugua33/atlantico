@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Atlántico Remises - Panel de Control</title>
+    <!-- CSS de Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden;
+        }
+        #mapa { 
+            height: 100vh; 
+            width: 100vw; 
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .info-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: white;
+            padding: 15px 20px;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="info-panel">
+        <h3>Panel de Control</h3>
+        <p>Monitoreando choferes en vivo</p>
+    </div>
+    
+    <div id="mapa"></div>
+
+    <!-- JS de Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Inicializar el mapa asegurando la carga visual
+        var map = L.map('mapa').setView([-38.0055, -57.5426], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var marker = L.marker([-38.0055, -57.5426]).addTo(map);
+
+        const socket = io();
+        socket.on('move-car', (data) => {
+            marker.setLatLng([data.lat, data.lng]);
+            map.setView([data.lat, data.lng]);
+        });
+    </script>
+</body>
+</html>
