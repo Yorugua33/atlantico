@@ -161,55 +161,50 @@
             font-weight: 600;
         }
 
-        /* Ícono de Auto 3D Azul para la Flota FIFO */
+        /* Ícono de Auto Azul estándar para la Flota FIFO */
         .car-3d-marker {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #2563eb;
             border: 2px solid #ffffff;
-            border-radius: 50% 50% 30% 30%;
-            width: 36px;
-            height: 36px;
+            border-radius: 6px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 16px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.4);
-            transform: perspective(500px) rotateX(15deg);
+            font-size: 14px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
         }
 
-        /* 🚗 Estilo Completo: Autito Rojo 3D + Nombre del Chofer (GPS Vivo) */
-        .car-red-live-container {
+        /* 🚗 Autito Rojo Plano, Compacto y con el Nombre del Chofer (Celular) */
+        .car-red-flat-container {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            white-space: nowrap;
-            transform: translate(-50%, -100%);
-        }
-        .car-red-badge {
-            background: #0f172a;
-            color: #f8fafc;
+            background: #ffffff;
             border: 2px solid #ef4444;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            margin-bottom: 5px;
-            letter-spacing: 0.4px;
+            padding: 3px 8px 3px 4px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            transform: translate(-10%, -50%);
         }
-        .car-red-3d-marker {
-            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            border: 2px solid #ffffff;
-            border-radius: 50% 50% 30% 30%;
-            width: 44px;
-            height: 44px;
+        .car-red-icon-wrapper {
+            background: #ef4444;
+            color: #ffffff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 20px;
-            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.7), inset 0 2px 4px rgba(255,255,255,0.5);
-            transform: perspective(500px) rotateX(15deg);
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .car-red-text {
+            color: #0f172a;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
         }
 
         /* Panel Derecho: Mapa y Controles Generales */
@@ -388,13 +383,13 @@
         let markersMap = {};
         let markerChoferVivo = null;
 
-        // Ícono 3D azul para la flota FIFO
-        const iconoAuto3D = L.divIcon({
+        // Ícono plano estándar azul para la flota FIFO
+        const iconoAutoPlano = L.divIcon({
             className: 'custom-car-icon',
             html: '<div class="car-3d-marker"><i class="fa-solid fa-car-side"></i></div>',
-            iconSize: [36, 36],
-            iconAnchor: [18, 18],
-            popupAnchor: [0, -18]
+            iconSize: [30, 30],
+            iconAnchor: [15, 15],
+            popupAnchor: [0, -15]
         });
 
         function guardarStorage() {
@@ -553,7 +548,7 @@
                     markersMap[chofer.id].setLatLng([chofer.lat, chofer.lng]);
                     markersMap[chofer.id].setPopupContent(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
                 } else {
-                    const marker = L.marker([chofer.lat, chofer.lng], { icon: iconoAuto3D }).addTo(map)
+                    const marker = L.marker([chofer.lat, chofer.lng], { icon: iconoAutoPlano }).addTo(map)
                         .bindPopup(`<b>🚗 ${chofer.nombre}</b><br>Zona: ${chofer.zona}<br>Viajes: ${chofer.viajes}`);
                     markersMap[chofer.id] = marker;
                 }
@@ -602,7 +597,7 @@
             downloadAnchor.remove();
         }
 
-        // Consultar la posición en vivo por localStorage y renderizar el autito rojo 3D con el nombre exacto
+        // Consultar posición en vivo por localStorage y renderizar el autito rojo plano, compacto y con el nombre exacto del celular
         setInterval(() => {
             const lat = localStorage.getItem('chofer_lat');
             const lng = localStorage.getItem('chofer_lng');
@@ -617,24 +612,24 @@
                 document.getElementById('status-conexion').style.background = 'rgba(16, 185, 129, 0.1)';
                 document.getElementById('status-conexion').style.borderColor = 'rgba(16, 185, 129, 0.3)';
 
-                // Autito rojo 3D estilizado con el nombre encima flotando en el mapa
-                const iconoAutoRojo3DConNombre = L.divIcon({
-                    className: 'custom-red-car-icon',
+                // Autito rojo plano, compacto, con ícono y nombre del chofer sincronizado del celular
+                const iconoAutoRojoPlanoConNombre = L.divIcon({
+                    className: 'custom-red-car-flat',
                     html: `
-                        <div class="car-red-live-container">
-                            <div class="car-red-badge"><i class="fa-solid fa-user-shield"></i> ${nombreChoferGPS}</div>
-                            <div class="car-red-3d-marker"><i class="fa-solid fa-car-side"></i></div>
+                        <div class="car-red-flat-container">
+                            <div class="car-red-icon-wrapper"><i class="fa-solid fa-car-side"></i></div>
+                            <span class="car-red-text">${nombreChoferGPS}</span>
                         </div>
                     `,
-                    iconSize: [44, 70],
-                    iconAnchor: [22, 70],
-                    popupAnchor: [0, -70]
+                    iconSize: [120, 36],
+                    iconAnchor: [15, 18],
+                    popupAnchor: [0, -18]
                 });
 
                 if (!markerChoferVivo) {
-                    markerChoferVivo = L.marker([parsedLat, parsedLng], { icon: iconoAutoRojo3DConNombre }).addTo(map).bindPopup(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`).openPopup();
+                    markerChoferVivo = L.marker([parsedLat, parsedLng], { icon: iconoAutoRojoPlanoConNombre }).addTo(map).bindPopup(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`).openPopup();
                 } else {
-                    markerChoferVivo.setIcon(iconoAutoRojo3DConNombre);
+                    markerChoferVivo.setIcon(iconoAutoRojoPlanoConNombre);
                     markerChoferVivo.setLatLng([parsedLat, parsedLng]);
                     markerChoferVivo.setPopupContent(`<b>🚗 ${nombreChoferGPS}</b><br>En transmisión GPS en vivo`);
                 }
